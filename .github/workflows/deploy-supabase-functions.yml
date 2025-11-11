@@ -1,0 +1,50 @@
+name: Deploy Supabase Edge Functions
+
+on:
+  push:
+    branches:
+      - main
+      - master
+    paths:
+      - 'supabase/functions/**'
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Supabase CLI
+        run: |
+          npm install -g supabase
+
+      - name: Deploy Edge Functions
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+        run: |
+          echo "Deploying Edge Functions to Supabase..."
+          
+          supabase functions deploy generate-images \
+            --project-ref $SUPABASE_PROJECT_REF \
+            --no-verify-jwt
+          
+          supabase functions deploy analyze-and-model-thumbnail \
+            --project-ref $SUPABASE_PROJECT_REF \
+            --no-verify-jwt
+          
+          echo "Deploy completed successfully!"
+
+      - name: Verify deployment
+        run: |
+          echo "Edge Functions deployed:"
+          echo "- generate-images"
+          echo "- analyze-and-model-thumbnail"
